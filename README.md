@@ -1,5 +1,10 @@
 # qwalk-topo
 
+[![tests](https://github.com/shafin192002/qwalk-topo/actions/workflows/tests.yml/badge.svg)](https://github.com/shafin192002/qwalk-topo/actions/workflows/tests.yml)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![NumPy](https://img.shields.io/badge/powered%20by-NumPy-013243.svg?logo=numpy&logoColor=white)](https://numpy.org/)
+
 **Topological diagnostics for discrete-time quantum walks on orientable and non-orientable surfaces.**
 
 `qwalk-topo` computes Floquet operators, quasi-energy spectra, and chiral
@@ -69,20 +74,16 @@ nu = winding_number(theta1=0.6, theta2=0.35)   # -> integer
 
 ## The walk
 
-Hilbert space `H = H_pos ⊗ H_coin`, coin `C^2`. The split-step Floquet operator is
+Hilbert space `H = H_pos ⊗ H_coin`, coin `C²`. The split-step Floquet operator is
 
-```
-U = S_-  C(θ₂)  S_+  C(θ₁),     C(θ) = exp(-i θ σ_y)
-```
+$$U = S_-\, C(\theta_2)\, S_+\, C(\theta_1), \qquad C(\theta) = e^{-i\,\theta\,\sigma_y}$$
 
 with conditional half-shifts `S_±`. On the ring the shift is periodic; on the
 Möbius band the orientation-reversing seam contributes the ℤ₂ spin holonomy
 `−1` to the coin wavefunction (a spin-½ frame transported once around a
 non-orientable loop returns with a sign flip), implementing the gluing
 
-```
-ψ(x + N) = −ψ(x)           (anti-periodic boundary condition)
-```
+$$\psi(x + N) = -\psi(x) \qquad \text{(anti-periodic boundary condition)}$$
 
 realised by negating the **single seam bond** of the shift — the wrap-around
 hopping `N−1 ↔ 0` — and leaving every bulk bond untouched. (Multiplying the
@@ -95,9 +96,7 @@ In the **symmetric time frame** the chiral symmetry `Γ = σ_x` is manifest, the
 effective-Hamiltonian Bloch vector lies in the `(n_y, n_z)` plane, and the
 winding number
 
-```
-ν = (1/2π) ∮ (n_y dn_z − n_z dn_y) / (n_y² + n_z²)
-```
+$$\nu = \frac{1}{2\pi} \oint \frac{n_y\, dn_z - n_z\, dn_y}{n_y^2 + n_z^2}$$
 
 is integer-quantised away from the gap-closing lines `θ₁ = ±θ₂`.
 
