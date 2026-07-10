@@ -76,7 +76,7 @@ nu = winding_number(theta1=0.6, theta2=0.35)   # -> integer
 
 Hilbert space `H = H_pos ⊗ H_coin`, coin `C²`. The split-step Floquet operator is
 
-$$U = S_-\, C(\theta_2)\, S_+\, C(\theta_1), \qquad C(\theta) = e^{-i\,\theta\,\sigma_y}$$
+$$U = S_- C(\theta_2) S_+ C(\theta_1), \quad\quad C(\theta) = e^{-i\theta\sigma_y}$$
 
 with conditional half-shifts `S_±`. On the ring the shift is periodic; on the
 Möbius band the orientation-reversing seam contributes the ℤ₂ spin holonomy
@@ -96,7 +96,7 @@ In the **symmetric time frame** the chiral symmetry `Γ = σ_x` is manifest, the
 effective-Hamiltonian Bloch vector lies in the `(n_y, n_z)` plane, and the
 winding number
 
-$$\nu = \frac{1}{2\pi} \oint \frac{n_y\, dn_z - n_z\, dn_y}{n_y^2 + n_z^2}$$
+$$\nu = \frac{1}{2\pi} \oint \frac{n_y  dn_z - n_z  dn_y}{n_y^2 + n_z^2}$$
 
 is integer-quantised away from the gap-closing lines `θ₁ = ±θ₂`.
 
