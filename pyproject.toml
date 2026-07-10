@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qwalk-topo"
+version = "0.1.0"
+description = "Topological diagnostics for discrete-time quantum walks on orientable and non-orientable surfaces"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Abdullah Al Shafin"}]
+keywords = ["quantum walk", "topological", "Floquet", "Mobius", "DTQW", "winding number"]
+dependencies = ["numpy>=1.23", "matplotlib>=3.6"]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
+circuit = ["pennylane>=0.35"]
+
+[tool.setuptools.packages.find]
+include = ["qwalktopo*"]

@@ -1,0 +1,47 @@
+cff-version: 1.2.0
+title: "qwalk-topo: Topological diagnostics for discrete-time quantum walks on non-orientable surfaces"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - family-names: "Al Shafin"
+    given-names: "Abdullah"
+    affiliation: "BRAC University"
+version: 0.1.0
+date-released: 2026-06-29
+license: MIT
+keywords:
+  - quantum walk
+  - discrete-time quantum walk
+  - topological invariant
+  - Mobius band
+  - Floquet
+references:
+  - type: article
+    authors:
+      - family-names: Kitagawa
+        given-names: Takuya
+    title: "Exploring topological phases with quantum walks"
+    journal: "Physical Review A"
+    volume: 82
+    year: 2010
+  - type: article
+    authors:
+      - family-names: Asboth
+        given-names: Janos
+    title: "Bulk-boundary correspondence for chiral symmetric quantum walks"
+    journal: "Physical Review B"
+    volume: 88
+    year: 2013
+  - type: article
+    authors:
+      - family-names: Chen
+        given-names: "Z. Y."
+      - family-names: Yang
+        given-names: "Shengyuan A."
+      - family-names: Zhao
+        given-names: "Y. X."
+    title: "Brillouin Klein bottle from artificial gauge fields"
+    journal: "Nature Communications"
+    volume: 13
+    year: 2022
+    notes: "Reproduced by the klein_bottle_invariant module."
