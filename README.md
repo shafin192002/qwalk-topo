@@ -252,4 +252,4 @@ MIT.
 
 ---
 
-*Developed by Abdullah Al Shafin and S.M. Yousuf Iqbal Tomal.*
+*Developed by Abdullah Al Shafin.*
