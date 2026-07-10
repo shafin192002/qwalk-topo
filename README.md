@@ -76,7 +76,7 @@ nu = winding_number(theta1=0.6, theta2=0.35)   # -> integer
 
 Hilbert space `H = H_pos ⊗ H_coin`, coin `C²`. The split-step Floquet operator is
 
-$$U = S_- C(\theta_2) S_+ C(\theta_1), \quad\quad C(\theta) = e^{-i\theta\sigma_y}$$
+$$U = S_- \thinspace C(\theta_2) \thinspace S_+ \thinspace C(\theta_1), \qquad C(\theta) = e^{-i\theta\sigma_y}$$
 
 with conditional half-shifts `S_±`. On the ring the shift is periodic; on the
 Möbius band the orientation-reversing seam contributes the ℤ₂ spin holonomy
