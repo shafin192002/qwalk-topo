@@ -249,7 +249,3 @@ Kirby & Taylor (1990) — full provenance in `DOCUMENTATION.md` §7.
 ## License
 
 MIT.
-
----
-
-*Developed by Abdullah Al Shafin.*
