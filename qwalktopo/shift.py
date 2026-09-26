@@ -48,6 +48,55 @@ def _basis_shift(N: int, direction: int) -> np.ndarray:
     return P
 
 
+TOPOLOGIES = ("ring", "mobius")
+
+PROJ0 = np.array([[1, 0], [0, 0]], dtype=complex)
+PROJ1 = np.array([[0, 0], [0, 1]], dtype=complex)
+
+
+def check_topology(topology: str) -> str:
+    """Validate a 1D topology name, or raise.
+
+    Silently falling back to the ring when the name is unrecognised is the one
+    failure this package must never have: 'ring' and 'mobius' are the whole
+    comparison, so a typo like 'Mobius' or 'torus' would hand back a ring result
+    that looks entirely plausible and is wrong.
+    """
+    if topology not in TOPOLOGIES:
+        raise ValueError(
+            f"unknown topology {topology!r}; expected one of {TOPOLOGIES}. "
+            "(Names are case-sensitive: use 'mobius', not 'Mobius'.)")
+    return topology
+
+
+def _require_unitary(M: np.ndarray, what: str, atol: float = 1e-10) -> np.ndarray:
+    """Raise unless M is unitary.
+
+    Deliberately not an ``assert``: ``python -O`` strips assert statements, and
+    these checks are the package's correctness guarantee, not debug scaffolding.
+    """
+    n = M.shape[0]
+    if not np.allclose(M @ M.conj().T, np.eye(n), atol=atol):
+        raise RuntimeError(f"{what} is not unitary")
+    return M
+
+
+def apply_seam_twist(Pp: np.ndarray, Pm: np.ndarray, N: int) -> None:
+    """Apply the Mobius anti-periodic (-1) twist, in place, to the seam bond only.
+
+    This is the single source of truth for the twist: both ``mobius_shift`` (the
+    full conditional shift) and ``walk._half_shift`` (the two half-shifts the
+    split-step walk actually composes) call it, so the two constructions cannot
+    drift apart.
+
+    The twist must touch the SEAM BOND ALONE -- the wrap-around hoppings
+    (N-1) -> 0 and 0 -> (N-1) -- and no bulk bond; see the module docstring and
+    ``mobius_shift`` for why the tempting site-local shortcut is wrong.
+    """
+    Pp[0, N - 1] *= -1.0       # right-mover crossing the seam  (N-1) -> 0
+    Pm[N - 1, 0] *= -1.0       # left-mover  crossing the seam    0 -> (N-1)
+
+
 def ring_shift(N: int) -> np.ndarray:
     """Conditional shift on a periodic ring (orientable).
 
@@ -56,12 +105,9 @@ def ring_shift(N: int) -> np.ndarray:
     """
     Pp = _basis_shift(N, +1)
     Pm = _basis_shift(N, -1)
-    proj0 = np.array([[1, 0], [0, 0]], dtype=complex)
-    proj1 = np.array([[0, 0], [0, 1]], dtype=complex)
-    S = np.kron(Pp, proj0) + np.kron(Pm, proj1)
+    S = np.kron(Pp, PROJ0) + np.kron(Pm, PROJ1)
     # VERIFY: unitarity, S S^dagger = I_{2N}
-    assert np.allclose(S @ S.conj().T, np.eye(2 * N)), "ring shift not unitary"
-    return S
+    return _require_unitary(S, "ring shift")
 
 
 def mobius_shift(N: int) -> np.ndarray:
@@ -90,19 +136,20 @@ def mobius_shift(N: int) -> np.ndarray:
     """
     Pp = _basis_shift(N, +1)   # right-mover permutation
     Pm = _basis_shift(N, -1)   # left-mover permutation
-    # Anti-periodic (-1) twist on the seam bond only:
-    Pp[0, N - 1] *= -1.0       # right-mover crossing the seam  (N-1) -> 0
-    Pm[N - 1, 0] *= -1.0       # left-mover  crossing the seam    0 -> (N-1)
-    proj0 = np.array([[1, 0], [0, 0]], dtype=complex)
-    proj1 = np.array([[0, 0], [0, 1]], dtype=complex)
-    S = np.kron(Pp, proj0) + np.kron(Pm, proj1)
+    apply_seam_twist(Pp, Pm, N)
+    S = np.kron(Pp, PROJ0) + np.kron(Pm, PROJ1)
     # VERIFY: unitarity. Negating a matrix element of a permutation keeps every
     # column a distinct unit vector, so S stays unitary.
-    assert np.allclose(S @ S.conj().T, np.eye(2 * N)), "mobius shift not unitary"
+    _require_unitary(S, "mobius shift")
     # VERIFY: the twist touches the seam only -- S_mobius and S_ring agree on
     # every bulk bond and differ (by the sign) on exactly the two seam bonds.
-    diff = np.abs(S - ring_shift(N))
-    assert np.count_nonzero(diff > 1e-12) == 2, "mobius twist not confined to seam"
+    # (N = 1 is degenerate: the single site's two bonds *are* the seam.)
+    if N > 1:
+        n_diff = np.count_nonzero(np.abs(S - ring_shift(N)) > 1e-12)
+        if n_diff != 2:
+            raise RuntimeError(
+                f"mobius twist not confined to the seam: {n_diff} matrix "
+                "elements differ from the ring shift, expected exactly 2")
     return S
 
 
@@ -147,5 +194,4 @@ def klein_shift(Nx: int, Ny: int) -> np.ndarray:
                 S[idx(x, y - 1, 3), idx(x, y, 3)] = 1.0
 
     # VERIFY: permutation -> unitary
-    assert np.allclose(S @ S.conj().T, np.eye(dim)), "klein shift not unitary"
-    return S
+    return _require_unitary(S, "klein shift")

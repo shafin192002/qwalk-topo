@@ -140,7 +140,7 @@ def cyz_floquet_effective_hamiltonian(kx: float, ky: float, s: float = 0.4,
 def _occupied_frame(Hk: np.ndarray, n_occ: int) -> np.ndarray:
     """Columns = the n_occ lowest-energy eigenvectors of a Hermitian matrix."""
     _, vecs = np.linalg.eigh(Hk)
-    return vecs[:, :n_occ]
+    return vecs[..., :n_occ]
 
 
 def berry_phase_kx_loop(H, ky: float, n_occ: int, n_kx: int = 300,
@@ -150,17 +150,44 @@ def berry_phase_kx_loop(H, ky: float, n_occ: int, n_kx: int = 300,
     gamma(ky) = arg det [ prod_i <U(kx_i)|U(kx_{i+1})> ] in (-pi, pi], with U the
     frame of the n_occ lowest bands. Uses the multiband overlap determinant, so it
     is gauge invariant and robust for degenerate bands.
+
+    The eigen-decomposition, the overlaps and their determinants are all batched
+    over kx; ``det`` is multiplicative, so the determinant of the Wilson product
+    is the product of the per-link determinants, which removes the sequential
+    matrix loop as well.
     """
     ks = np.linspace(-np.pi, np.pi, n_kx, endpoint=False)
-    frames = [_occupied_frame(H(k, ky, **params), n_occ) for k in ks]
-    M = np.eye(n_occ, dtype=complex)
-    for i in range(n_kx):
-        M = M @ (frames[i].conj().T @ frames[(i + 1) % n_kx])
-    return float(np.angle(np.linalg.det(M)))
+    Hs = np.stack([np.asarray(H(k, ky, **params)) for k in ks])
+    frames = _occupied_frame(Hs, n_occ)                  # (n_kx, dim, n_occ)
+    links = np.conj(np.transpose(frames, (0, 2, 1))) @ np.roll(frames, -1, axis=0)
+    return float(np.angle(np.prod(np.linalg.det(links))))
+
+
+def check_glide(H, glide: np.ndarray = GLIDE_U, n: int = 5, atol: float = 1e-9,
+                **params) -> None:
+    """Raise unless H obeys the glide symmetry  V H(kx,ky) V^dagger = H(-kx, ky+pi).
+
+    The Klein-bottle Z2 is only defined for a glide-symmetric Hamiltonian: the
+    glide is what folds the Brillouin zone into a Klein bottle and forces the
+    Chern number to vanish. Fed a Hamiltonian without it, the Wilson-loop count
+    still returns a plausible-looking 0 or 1 that means nothing, so the
+    precondition is checked rather than assumed.
+    """
+    for kx in np.linspace(-3.0, 3.0, n):
+        for ky in np.linspace(-3.0, 3.0, n):
+            lhs = glide @ np.asarray(H(kx, ky, **params)) @ glide.conj().T
+            rhs = np.asarray(H(-kx, ky + np.pi, **params))
+            if not np.allclose(lhs, rhs, atol=atol):
+                raise ValueError(
+                    "H does not satisfy the glide symmetry "
+                    "V H(kx,ky) V^dagger = H(-kx, ky+pi) at "
+                    f"(kx, ky) = ({kx:+.3f}, {ky:+.3f}); max deviation "
+                    f"{np.max(np.abs(lhs - rhs)):.2e}. The Klein-bottle Z2 "
+                    "invariant is undefined without it.")
 
 
 def klein_bottle_invariant(H, n_occ: int, n_kx: int = 300, n_ky: int = 400,
-                           **params) -> int:
+                           verify_glide: bool = False, **params) -> int:
     """Z2 Klein-bottle invariant nu in {0, 1} (Chen, Yang & Zhao, 2022).
 
     nu = (number of times the kx-Wilson-loop Berry phase gamma(ky) crosses pi as
@@ -174,8 +201,14 @@ def klein_bottle_invariant(H, n_occ: int, n_kx: int = 300, n_ky: int = 400,
     n_kx, n_ky : Wilson-loop / sweep resolution.
     **params : forwarded to H (e.g. the CYZ hopping parameters).
 
+    verify_glide : if True, spot-check the glide precondition first via
+        ``check_glide`` and raise if it fails. Off by default because it costs
+        extra H evaluations; worth turning on for any new model.
+
     Verified on cyz_hamiltonian: returns 1 for CYZ_NONTRIVIAL, 0 for CYZ_TRIVIAL.
     """
+    if verify_glide:
+        check_glide(H, **params)
     kys = np.linspace(-np.pi, 0.0, n_ky)
     gamma = np.unwrap([berry_phase_kx_loop(H, ky, n_occ, n_kx, **params)
                        for ky in kys])
