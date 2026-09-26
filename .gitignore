@@ -6,3 +6,11 @@ build/
 dist/
 .ipynb_checkpoints/
 *.tar.gz
+
+# Manim's default render output (animations/)
+media/
+
+# Rendered animations: regenerate with `python animations/<scene>.py`.
+# The README embeds them as GitHub attachment URLs, which live on GitHub's CDN
+# rather than in git history, so the binaries do not need committing.
+animations/renders/

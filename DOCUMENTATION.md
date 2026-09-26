@@ -184,6 +184,12 @@ qwalktopo/
     └── klein.py           # 2D Z2 Klein-bottle invariant + Floquet Klein walk
 ```
 
+Alongside the package: `examples/` produces the static figures of §4, and
+`animations/` holds four Manim scenes covering the parts whose meaning is in the
+motion — the `−1` holonomy (§2.1), the seam acting on a walk, the momentum
+quantisation of §2.2 derived from the closure condition, and the winding number
+of §2.3. See `animations/README.md`.
+
 ### 3.1 `shift.py` — the geometry
 
 This is where orientability is encoded; it is the conceptual heart.
@@ -214,7 +220,12 @@ This is where orientability is encoded; it is the conceptual heart.
 - **`klein_shift(Nx, Ny)`** generalises to two dimensions on a Klein bottle: a
   4-state coin encoding `(+x, −x, +y, −y)`, with the `x`-direction periodic and
   the `y`-direction glued with an `x`-reflection (the Klein identification).
-  Provided and unitarity-tested; its 2D invariant is left as an extension point.
+  Provided and tested as a genuine Klein gluing — not merely unitary: the `+y`
+  and `−y` movers are exact mutual inverses, and the `y`-translation has order
+  `2N_y` rather than `N_y`, since one circuit reflects `x` and only two restore
+  it. Its 2D invariant is left as an extension point. Note the naming: this
+  real-space `klein_shift` is **unrelated** to `invariants/klein.py`, which
+  implements the momentum-space Brillouin-Klein-bottle `ℤ₂` of §4.5.
 
 Every shift asserts its own unitarity (`S Sᵀ = I`) before returning — a
 non-negotiable sanity check, since a non-unitary "shift" is physically
@@ -239,7 +250,7 @@ meaningless.
   `U = S₋ C(θ₂) S₊ C(θ₁)` and checks its unitarity. `topology` is `"ring"` or
   `"mobius"`.
 
-- **`quasi_energies(U)`** returns the quasi-energies `ε ∈ (−π, π]` from
+- **`quasi_energies(U)`** returns the quasi-energies `ε ∈ [−π, π)` from
   `U|ψ⟩ = e^{−iε}|ψ⟩`, after verifying every eigenvalue lies on the unit circle.
 
 ### 3.3 `invariants/winding.py` — the topology
@@ -255,15 +266,30 @@ meaningless.
   n̂·σ)` by eigendecomposition, reading off the Pauli components via traces
   `n_a = Tr(H σ_a) / (2E)`.
 
-- **`winding_number(θ₁, θ₂, n_k)`** sweeps `k` across the Brillouin zone, takes
-  the chiral-protected `(n_y, n_z)` components, closes the loop, unwraps the
-  polar angle, and returns the integer winding. On the gap-closing lines the
-  invariant is undefined and is flagged rather than silently returned.
+- **`winding_number(θ₁, θ₂, n_k, gap_tol)`** sweeps `k` across the Brillouin
+  zone, takes the chiral-protected `(n_y, n_z)` components, closes the loop,
+  unwraps the polar angle, and returns the integer winding. The sweep is
+  batched over `k` (one vectorised matmul chain rather than a per-`k` `eig`),
+  which is ~140× faster and lets the phase diagram of §4.2 build in seconds
+  instead of minutes.
+
+  On the gap-closing lines the invariant is undefined, and it **raises
+  `ValueError`** rather than returning a value. The diagnostic is
+  `min_k |sin E(k)|`, which vanishes exactly when a band touches `ε = 0`
+  (`E = 0`) or `ε = π` (`E = π`); `gap_tol` defaults to `1e-8`, roughly six
+  orders of magnitude below the gap at the nearest off-line point of a typical
+  scan. The check is not cosmetic: *on* a closing line the raw sweep still
+  returns a clean `−1.000000`, so nothing about the number itself reveals that
+  it is meaningless.
 
 ### 3.4 Verification discipline
 
-Every non-trivial function carries an inline sanity check, and `tests/test_core.py`
-(44 tests) provides known-answer tests. This was not cosmetic: three genuine
+Every non-trivial function carries an inline sanity check — as an explicit
+`raise`, never a bare `assert`, since `python -O` strips assert statements and
+these are the package's correctness guarantee rather than debug scaffolding
+(`tests/test_guards.py` enforces this by scanning the package source). The suite
+(86 tests) provides known-answer tests for the physics and separate guard tests
+for the silent-failure modes. This was not cosmetic: three genuine
 bugs were caught and fixed *because* of these checks — see §5.
 
 ---
@@ -556,9 +582,43 @@ hidden.
    the first point and let `unwrap` do the accounting — don't add a manual
    closure on top.
 
-All three surfaced *because* of the verification discipline (unitarity asserts,
-Bloch-vector inspection, known-answer phase diagram), which is the strongest
-argument for keeping that discipline in research code.
+A later audit of the finished package found three more, all of the same
+*silent* kind — code that returns a plausible number instead of failing:
+
+4. **A mistyped topology silently returned the ring.** `_half_shift` tested
+   `if topology == "mobius"` with no validation on the other branch, so
+   `split_step_walk(N, θ₁, θ₂, "Mobius")` — capital `M` — or `"torus"`, or any
+   typo, quietly produced the *ring* walk. In a package whose entire thesis is
+   the ring/Möbius comparison, that is the worst available failure: no error, no
+   warning, and a result that looks completely reasonable. *Lesson:* when two
+   options are the whole point of the study, an unrecognised option name is a
+   hard error, never a default. Now `check_topology` raises.
+
+5. **The gap-closing flag was documented but not implemented.** Both this
+   document and the README claimed the winding number was "flagged, not silently
+   returned" on the gap-closing lines. It was not — `winding_number(0.3, 0.3)`
+   returned `−1`. Worse, the raw sweep there gives `−1.000000`, a clean integer
+   with no numerical smell to give it away, because the `(n_y,n_z)` loop stays
+   perfectly well-behaved while the invariant it encodes ceases to exist.
+   *Lesson:* a documented guarantee is not a guarantee; and an invariant that
+   *looks* quantised is not evidence that it is defined. The gap is now measured
+   (`min_k |sin E(k)|`) rather than inferred from the answer.
+
+6. **The seam twist had two implementations, and the guarded one was dead.**
+   The `−1` twist was written out in both `shift.mobius_shift` and
+   `walk._half_shift`. They agreed, but nothing enforced it — and the copy
+   carrying the "twist confined to the seam" check was `mobius_shift`, which the
+   walk never calls. The protected version was not the running version.
+   *Lesson:* duplicated physics drifts; both now call one `apply_seam_twist`,
+   and a test composes the half-shifts and compares against `mobius_shift`.
+
+The first three surfaced *because* of the verification discipline (unitarity
+checks, Bloch-vector inspection, known-answer phase diagram). The last three
+surfaced only from re-reading the code against its own documentation — which is
+the argument for auditing the claims, not just running the tests. All six shared
+one trait: the output stayed plausible, so only a check that did not depend on
+the output could catch them. (Those checks are also now explicit `raise`
+statements rather than `assert`s, which `python -O` would have removed.)
 
 ---
 

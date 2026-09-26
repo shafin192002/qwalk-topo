@@ -40,6 +40,14 @@ the standard ring/torus walks studied in the literature.
 The discrete-time **and** non-orientable **and** invariant-resolved combination
 is, to our knowledge, not covered by an existing open tool.
 
+*Read the last row as a property of the package, not of a single call.*
+`winding_number` computes the **bulk** (Bloch) invariant of the split-step
+family; the Möbius contribution is spectral — the anti-periodic momentum
+quantisation of §"The walk" and the finite-size gap it opens — rather than a
+separate non-orientable invariant. The `ℤ₂` of a non-orientable *Brillouin zone*
+is the 2D Klein-bottle index, shipped here as a verified reproduction of Chen,
+Yang & Zhao. See "Scope and limitations".
+
 ---
 
 ## Install
@@ -64,7 +72,7 @@ from qwalktopo import split_step_walk, quasi_energies, winding_number
 
 # Floquet operator of a split-step walk on a Möbius band
 U = split_step_walk(N=16, theta1=0.6, theta2=0.35, topology="mobius")
-eps = quasi_energies(U)            # quasi-energies in (-pi, pi]
+eps = quasi_energies(U)            # quasi-energies in [-pi, pi)
 
 # Bulk topological invariant (chiral winding number)
 nu = winding_number(theta1=0.6, theta2=0.35)   # -> integer
@@ -104,7 +112,7 @@ is integer-quantised away from the gap-closing lines `θ₁ = ±θ₂`.
 
 ## Verified against known results
 
-The test suite (`tests/`, 44 tests) checks:
+The test suite (`tests/`, 86 tests) checks:
 
 - **Unitarity** of every shift and Floquet operator (ring, Möbius, Klein), and
   of the position-dependent coin.
@@ -130,6 +138,13 @@ The test suite (`tests/`, 44 tests) checks:
   symmetry, and its invariant matches CYZ in the static limit (`tests/test_klein.py`).
 - **Circuit backend**: the circuit unitary equals `split_step_walk` (ring and
   Möbius) and its sampled dynamics match, to machine precision (`tests/test_circuit.py`).
+- **Guards** (`tests/test_guards.py`): the silent-failure modes, separately from
+  the physics — an unknown `topology` raises instead of falling back to the ring,
+  the seam twist has a single shared implementation (the half-shifts compose to
+  `mobius_shift`), the winding number raises on gap-closing lines, the Klein `ℤ₂`
+  rejects a non-glide-symmetric Hamiltonian, `klein_shift` is a genuine Klein
+  gluing (its `y`-translation has order `2N_y`, not `N_y`), and no correctness
+  check is a bare `assert` (which `python -O` would strip).
 
 ```bash
 python -m pytest tests/ -v
@@ -219,6 +234,30 @@ exact-diagonalisation distribution, for both ring and Möbius.
 
 ---
 
+## Animations
+
+Four Manim scenes live in [`animations/`](animations/), for the parts of the
+physics whose meaning is in the *motion* and which a static figure therefore
+cannot carry. The first three are one argument, in order:
+
+| Scene | Shows |
+|---|---|
+| `mobius_frame.py` | A frame carried once around the band comes back **inverted** — why the seam twist is `−1` and not `+1`. |
+| `seam_flip.py` | Ring and Möbius walks as *signed* amplitudes: all 32 components agree exactly until step 8, when precisely **one flips sign**, and that lone sign then interferes outward. |
+| `which_waves_fit.py` | A wave must meet itself after one lap, so the Möbius gluing shifts every allowed `k` by **half a step** — and forbids `k = 0` outright, which is exactly the momentum where the gap closes. |
+| `winding_loop.py` | The chiral Bloch vector sweeping the Brillouin zone, accumulated angle read off live: a full lap for `ν = −1`, out-and-back for `ν = 0`. (The bulk invariant — a separate result, with no Möbius in it.) |
+
+```bash
+pip install manim          # the only extra dependency; no ffmpeg, no LaTeX
+python animations/seam_flip.py        # renders and plays a draft
+```
+
+Rendered 1080p copies are in `animations/renders/`. See
+[`animations/README.md`](animations/README.md) for the render commands, the
+structure, and why these scenes plot signed amplitudes rather than densities.
+
+---
+
 ## Scope and limitations
 
 - 1D split-step walk and its Möbius (anti-periodic) closure are fully validated.
@@ -231,7 +270,10 @@ exact-diagonalisation distribution, for both ring and Möbius.
   Applying it to the package's *own* 2D split-step walk is the open step.)
 - The Klein-bottle **shift** (2D) is provided and unitarity-tested.
 - The winding number is defined for the chiral-symmetric split-step family. It
-  is undefined exactly on gap-closing lines (flagged, not silently returned).
+  is undefined exactly on gap-closing lines, where `winding_number` raises
+  `ValueError` rather than returning a value. This matters more than it sounds:
+  on those lines the raw k-sweep still produces a clean-looking integer, so the
+  gap is checked (`min_k |sin E(k)|`) rather than inferred from the result.
 - Decoherence is implemented (`noise.py`) as dependency-free density-matrix
   evolution (NumPy only); the mean chiral displacement tracks the topology under
   noise. Extending it to the Möbius walk is a natural next step.
