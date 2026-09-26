@@ -55,12 +55,14 @@ Yang & Zhao. See "Scope and limitations".
 ```bash
 git clone https://github.com/shafin192002/qwalk-topo
 cd qwalk-topo
-pip install -e .            # core: NumPy + Matplotlib only
-pip install -e .[circuit]   # optional: adds the PennyLane circuit backend
+pip install -e .              # core: NumPy + Matplotlib only
+pip install -e .[circuit]     # optional: the PennyLane circuit backend
+pip install -e .[animations]  # optional: Manim, to render animations/
 ```
 
 Requires Python ≥ 3.10, NumPy, and Matplotlib. The circuit backend
-(`qwalktopo.circuit`) additionally needs PennyLane (optional extra).
+(`qwalktopo.circuit`) additionally needs PennyLane. Rendering the animations
+needs Manim Community — neither ffmpeg nor LaTeX is required.
 
 ---
 
@@ -179,9 +181,12 @@ regions `ν ∈ {−1, 0, +1}` split by the gap-closing lines `θ₁ = ±θ₂`.
 
 ![Topological phase diagram](figures/phase_diagram.png)
 
-**The winding number, visualised** — `n̂(k)` traces a loop in the `(n_y,n_z)`
-plane; it encircles the origin once in the topological phase (`ν=−1`) and not at
-all in the trivial phase (`ν=0`).
+**The winding number, visualised** — chiral symmetry pins `n̂(k)` to the
+`(n_y,n_z)` plane, so it rides the **unit circle in both phases** and the two
+curves are the same distance from the origin. What separates them is how far
+around they get: a full lap for `ν=−1`, out-and-back for `ν=0`. (Net winding is
+what "encircles the origin" counts; it is not something the loop's position on
+the page shows.)
 
 ![Winding number visualised](figures/winding_sphere.png)
 
@@ -289,11 +294,16 @@ pip install -e .[animations]     # Manim Community; no ffmpeg, no LaTeX needed
 python animations/seam_flip.py   # renders a draft and plays it
 ```
 
-Videos are not committed — the scenes are the source of truth and a render is a
-build artefact. `python animations/_data.py` checks the physics behind all four
-without Manim installed, and CI runs it. See
-[`animations/README.md`](animations/README.md) for the full render commands and
-why these scenes plot signed amplitudes rather than densities.
+Videos are not committed — the scenes are the source of truth, and a render is a
+build artefact.
+
+Rendering needs Manim. *Checking the physics does not*:
+`python animations/_data.py` prints the numbers behind all four scenes — the
+seam divergence steps, the `−1` holonomy, the allowed momenta, both winding
+numbers — using only NumPy, and CI runs it on every push.
+
+See [`animations/README.md`](animations/README.md) for the full render commands,
+and why these scenes plot signed amplitudes rather than densities.
 
 ---
 
@@ -305,9 +315,18 @@ why these scenes plot signed amplitudes rather than densities.
   (*Nat. Commun.* **13**, 2215, 2022), which arises from the same `±1` twist used
   for the Möbius seam. It matches their published `ν = 1 / 0`, is
   resolution-stable, jumps only at gap closings, and is confirmed by edge modes.
-  (This reproduces established physics; it is a validated tool, not a new result.
-  Applying it to the package's *own* 2D split-step walk is the open step.)
-- The Klein-bottle **shift** (2D) is provided and unitarity-tested.
+  (This reproduces established physics; it is a validated tool, not a new result.)
+- The invariant **is** applied to a discrete-time walk of the package's own:
+  `cyz_floquet_walk` builds a 2D split-step Floquet operator from
+  glide-covariant pieces, and its `ε = 0` invariant recovers CYZ's `ν = 1 / 0`
+  at small drive (`DOCUMENTATION.md` §4.9). What stays open is the strong-drive
+  regime, where the naive Wilson-loop count flips with no gap closing — an
+  artefact of the branch cut at `ε = π`, not a transition. A proper
+  Rudner–Lindner–Berg–Levin per-gap invariant is future work.
+- The Klein-bottle **shift** (2D) is provided and tested as a genuine Klein
+  gluing, not merely for unitarity: the `±y` movers are exact mutual inverses
+  and the `y`-translation has order `2N_y` rather than `N_y`, since one circuit
+  reflects `x` and only two restore it.
 - The winding number is defined for the chiral-symmetric split-step family. It
   is undefined exactly on gap-closing lines, where `winding_number` raises
   `ValueError` rather than returning a value. This matters more than it sounds:
