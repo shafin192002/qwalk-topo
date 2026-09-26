@@ -26,7 +26,7 @@ pip install manim      # Manim Community (NOT manimgl - the two are incompatible
 ```
 
 That is the whole list. Verified against a clean virtualenv with Manim 0.21.0:
-all three scenes render to mp4 and gif with **no ffmpeg and no LaTeX installed**.
+all four scenes render to mp4 and gif with **no ffmpeg and no LaTeX installed**.
 
 - **ffmpeg is not needed.** Older guides tell you to install it separately.
   Manim has since moved to PyAV, which it bundles, and encodes video in-process.
@@ -53,6 +53,10 @@ manim -qm --format=gif animations/seam_flip.py SeamFlipShort   # README GIF
 `-p` previews when done, `-q` sets quality (`l`/`m`/`h`/`k` = 480p/720p/1080p/4K).
 Draft at `-pql` while iterating; `-pqh` is many times slower and wastes time on
 a layout you are still changing.
+
+Rendered files land in `media/` by default, or wherever `--media_dir` points.
+Neither `media/` nor `renders/` is committed: the scenes are the source of
+truth, and a video is a build artefact you can regenerate in seconds.
 
 Each scene has a `...Short` subclass with tightened timings, meant for the
 looping GIFs that go in the top-level README. Keep those under ~500 KB each —

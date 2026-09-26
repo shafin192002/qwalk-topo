@@ -16,6 +16,9 @@ dependencies = ["numpy>=1.23", "matplotlib>=3.6"]
 [project.optional-dependencies]
 test = ["pytest>=7.0"]
 circuit = ["pennylane>=0.35"]
+# The Manim scenes in animations/. Community edition, NOT manimgl -- the two
+# are incompatible. Needs no ffmpeg (Manim bundles PyAV) and no LaTeX.
+animations = ["manim>=0.19"]
 
 [tool.setuptools.packages.find]
 include = ["qwalktopo*"]

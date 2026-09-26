@@ -23,3 +23,8 @@ jobs:
           pip install -e .[test,circuit]
       - name: Run tests
         run: python -m pytest tests/ -v
+      - name: Animation data self-check
+        # Needs no Manim: verifies the physics feeding the scenes (seam
+        # divergence steps, the -1 holonomy, the allowed momenta, the winding
+        # numbers). If this drifts, the animations are wrong before they render.
+        run: python animations/_data.py

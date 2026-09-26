@@ -252,7 +252,7 @@ pip install manim          # the only extra dependency; no ffmpeg, no LaTeX
 python animations/seam_flip.py        # renders and plays a draft
 ```
 
-Rendered 1080p copies are in `animations/renders/`. See
+Rendered videos are not committed — run a scene and it writes one. See
 [`animations/README.md`](animations/README.md) for the render commands, the
 structure, and why these scenes plot signed amplitudes rather than densities.
 
