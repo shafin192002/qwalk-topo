@@ -236,25 +236,64 @@ exact-diagonalisation distribution, for both ring and Möbius.
 
 ## Animations
 
-Four Manim scenes live in [`animations/`](animations/), for the parts of the
-physics whose meaning is in the *motion* and which a static figure therefore
-cannot carry. The first three are one argument, in order:
+Four [Manim](https://www.manim.community/) scenes, in [`animations/`](animations/),
+for the parts of the physics whose meaning is in the *motion* and which a static
+figure therefore cannot carry. The first three are one argument, in order.
 
-| Scene | Shows |
-|---|---|
-| `mobius_frame.py` | A frame carried once around the band comes back **inverted** — why the seam twist is `−1` and not `+1`. |
-| `seam_flip.py` | Ring and Möbius walks as *signed* amplitudes: all 32 components agree exactly until step 8, when precisely **one flips sign**, and that lone sign then interferes outward. |
-| `which_waves_fit.py` | A wave must meet itself after one lap, so the Möbius gluing shifts every allowed `k` by **half a step** — and forbids `k = 0` outright, which is exactly the momentum where the gap closes. |
-| `winding_loop.py` | The chiral Bloch vector sweeping the Brillouin zone, accumulated angle read off live: a full lap for `ν = −1`, out-and-back for `ν = 0`. (The bulk invariant — a separate result, with no Möbius in it.) |
+### Why the seam twist is `−1`
+
+A frame carried once around the band comes back **inverted**. That is the whole
+justification for the `−1` in `mobius_shift` — a spin-½ coin transported around
+an orientation-reversing loop returns negated.
+
+https://github.com/user-attachments/assets/0eb67749-f896-4622-9b45-b53c75f0749e
+
+### What the twist does
+
+Ring and Möbius walks from the same start, drawn as *signed* amplitudes. All 32
+components agree to the last bit until step 8, when exactly **one flips sign** —
+`+0.0923` against `−0.0923` — and that lone sign then interferes outward until
+the two walks differ everywhere.
+
+(Signed, not `|ψ|²`: the seam's effect is a factor `−1`, and a density cannot
+see a sign, since `|−a|² = |+a|²`. At the moment of crossing the two densities
+are *identical*.)
+
+https://github.com/user-attachments/assets/02e74ab8-7ab3-43d4-ac48-cb2f4c90c97e
+
+### What it costs you
+
+A wave must meet itself after one lap. On the ring it must return **as it left**;
+on the Möbius band it must return **upside down**. Sweeping `k` and keeping only
+the waves that close up gives `k = 2πm/N` against `k = 2π(m+½)/N` — the
+half-step shift, derived from nothing but the closure condition.
+
+And the flat wave? It would have to equal minus itself, so it cannot exist at
+all. That is `k = 0`, exactly where the gap closes — which is why the Möbius
+walk keeps a gap the ring loses.
+
+https://github.com/user-attachments/assets/7de731dc-2306-4d55-a3eb-9a7855cce0e2
+
+### The winding number
+
+The chiral Bloch vector sweeping the Brillouin zone, with the accumulated angle
+read off live: a full lap for `ν = −1`, out-and-back for `ν = 0`. (The bulk
+invariant — a separate result, with no Möbius in it.)
+
+https://github.com/user-attachments/assets/80497075-45ef-4555-83d8-fc9dd33a113c
+
+### Rendering them yourself
 
 ```bash
-pip install manim          # the only extra dependency; no ffmpeg, no LaTeX
-python animations/seam_flip.py        # renders and plays a draft
+pip install -e .[animations]     # Manim Community; no ffmpeg, no LaTeX needed
+python animations/seam_flip.py   # renders a draft and plays it
 ```
 
-Rendered videos are not committed — run a scene and it writes one. See
-[`animations/README.md`](animations/README.md) for the render commands, the
-structure, and why these scenes plot signed amplitudes rather than densities.
+Videos are not committed — the scenes are the source of truth and a render is a
+build artefact. `python animations/_data.py` checks the physics behind all four
+without Manim installed, and CI runs it. See
+[`animations/README.md`](animations/README.md) for the full render commands and
+why these scenes plot signed amplitudes rather than densities.
 
 ---
 
