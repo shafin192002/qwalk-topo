@@ -88,18 +88,23 @@ def walk_unitary(N: int, theta1: float, theta2: float,
 
 def run_walk(N: int, theta1: float, theta2: float, steps: int,
              x0: int | None = None, topology: str = "ring",
-             shots: int | None = None) -> np.ndarray:
+             shots: int | None = None, seed: int | None = None) -> np.ndarray:
     """Run the circuit and return the position probability distribution P(x).
 
     Starts a walker localised at ``x0`` (default N//2) with the balanced coin
     (|0>+i|1>)/sqrt(2). With ``shots`` set, samples on the simulator; otherwise
     returns exact probabilities.
+
+    ``seed`` fixes the sampler's random stream so a shot-based run is
+    reproducible. It is ignored when ``shots`` is None (that path is exact and
+    deterministic already). Pass one whenever a sampled result is going into a
+    figure or a comparison -- otherwise every run gives a different histogram.
     """
     qml = _pennylane()
     n = _n_qubits(N)
     if x0 is None:
         x0 = N // 2
-    dev = qml.device("default.qubit", wires=n + 1, shots=shots)
+    dev = qml.device("default.qubit", wires=n + 1, shots=shots, seed=seed)
 
     @qml.qnode(dev)
     def circuit():

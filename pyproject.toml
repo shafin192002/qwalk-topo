@@ -19,3 +19,10 @@ circuit = ["pennylane>=0.35"]
 
 [tool.setuptools.packages.find]
 include = ["qwalktopo*"]
+
+[tool.pytest.ini_options]
+# Let `pytest tests/` work straight from a clone, without an editable install
+# (previously only `python -m pytest` worked, because that adds the cwd).
+pythonpath = ["."]
+testpaths = ["tests"]
+

@@ -44,7 +44,9 @@ def main():
     fig, ax = plt.subplots(1, 2, figsize=(11, 4.3), sharey=True)
     for a, topo, col in [(ax[0], "ring", st.RING), (ax[1], "mobius", st.MOBIUS)]:
         x, p_ed = ed_distribution(N, t1, t2, T, topo)
-        p_shots = run_walk(N, t1, t2, T, topology=topo, shots=shots)
+        # seeded so the sampled histogram -- and this figure -- reproduce
+        p_shots = run_walk(N, t1, t2, T, topology=topo, shots=shots,
+                           seed=1234)
         a.plot(x, p_ed, "-", color=st.ACCENT, lw=1.8,
                label="exact diagonalisation")
         a.bar(x, p_shots, width=0.7, color=col, alpha=0.45,

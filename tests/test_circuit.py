@@ -43,3 +43,12 @@ def test_circuit_dynamics_match_ed(topology):
 def test_circuit_requires_power_of_two():
     with pytest.raises(ValueError):
         walk_unitary(12, 0.6, 0.35)
+
+
+def test_sampled_run_is_reproducible_with_a_seed():
+    # an unseeded shot-based run gives a different histogram every time, which
+    # silently makes any figure built from it unreproducible.
+    a = run_walk(8, 0.6, 0.35, 4, shots=2000, seed=7)
+    b = run_walk(8, 0.6, 0.35, 4, shots=2000, seed=7)
+    assert np.array_equal(a, b)
+    assert not np.array_equal(a, run_walk(8, 0.6, 0.35, 4, shots=2000, seed=8))
