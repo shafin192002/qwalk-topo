@@ -114,7 +114,7 @@ is integer-quantised away from the gap-closing lines `θ₁ = ±θ₂`.
 
 ## Verified against known results
 
-The test suite (`tests/`, 86 tests) checks:
+The test suite (`tests/`, 87 tests) checks:
 
 - **Unitarity** of every shift and Floquet operator (ring, Möbius, Klein), and
   of the position-dependent coin.
@@ -334,7 +334,14 @@ and why these scenes plot signed amplitudes rather than densities.
   gap is checked (`min_k |sin E(k)|`) rather than inferred from the result.
 - Decoherence is implemented (`noise.py`) as dependency-free density-matrix
   evolution (NumPy only); the mean chiral displacement tracks the topology under
-  noise. Extending it to the Möbius walk is a natural next step.
+  noise. It runs on the Möbius walk too — `topology_distinguishability` measures
+  how fast the ring/Möbius difference washes out, and finds no robustness at all
+  (`examples/mobius_noise.py`).
+
+**What is still open** — strong-drive Floquet Klein topology, hardware
+execution of the circuit backend, and writing the results up — is listed in
+[`DOCUMENTATION.md` §6](DOCUMENTATION.md). It is tracked there and not repeated
+here, so the two documents cannot drift apart as items get finished.
 
 ---
 

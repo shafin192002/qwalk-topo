@@ -288,7 +288,7 @@ Every non-trivial function carries an inline sanity check — as an explicit
 `raise`, never a bare `assert`, since `python -O` strips assert statements and
 these are the package's correctness guarantee rather than debug scaffolding
 (`tests/test_guards.py` enforces this by scanning the package source). The suite
-(86 tests) provides known-answer tests for the physics and separate guard tests
+(87 tests) provides known-answer tests for the physics and separate guard tests
 for the silent-failure modes. This was not cosmetic: three genuine
 bugs were caught and fixed *because* of these checks — see §5.
 

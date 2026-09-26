@@ -167,3 +167,40 @@ def test_quasi_energy_range_is_half_open():
 def test_symmetric_walk_rejects_bad_topology():
     with pytest.raises(ValueError, match="unknown topology"):
         symmetric_walk(8, 0.6, 0.35, "Mobius")
+
+
+
+# ---------- the docs must not drift from the code they describe ----------
+def _repo_root():
+    import pathlib
+    import qwalktopo
+    return pathlib.Path(qwalktopo.__file__).parent.parent
+
+
+def test_docs_state_the_real_test_count():
+    """The stated test count must match the collected one.
+
+    It is typed by hand into two files and nothing checked it, so it drifted
+    twice (44 -> 85 -> 86) before a person happened to notice. Prose
+    consistency needs a reader; a number does not.
+    """
+    import re
+    import subprocess
+    import sys
+    root = _repo_root()
+    out = subprocess.run([sys.executable, "-m", "pytest", "--collect-only", "-q"],
+                         cwd=root, capture_output=True, text=True).stdout
+    m = re.search(r"(\d+) tests? collected", out)
+    if m is None:                      # older/quieter pytest prints a bare total
+        m = re.search(r"^(\d+)$", out.strip().splitlines()[-1])
+    assert m, "could not determine the collected test count"
+    real = m.group(1)
+
+    for doc in ("README.md", "DOCUMENTATION.md"):
+        text = (root / doc).read_text(encoding="utf-8")
+        stated = re.findall(r"(\d+) tests", text)
+        assert stated, f"{doc} no longer states a test count"
+        for v in stated:
+            assert v == real, (
+                f"{doc} says {v} tests but {real} are collected - "
+                "update the doc, or drop the number so it cannot go stale")
